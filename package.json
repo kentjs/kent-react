@@ -1,0 +1,31 @@
+{
+  "name": "kent-react",
+  "version": "1.0.0",
+  "description": "render react components isomorphically using kent",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "Michael Rawlings",
+    "email": "mlrawlings@gmail.com",
+    "url": "https://github.com/mlrawlings"
+  },
+  "dependencies": {
+    "array-find": "^1.0.0",
+    "hash-loader": "^1.0.0",
+    "object-assign": "^4.0.1",
+    "react": "^0.13.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mlrawlings/kent-react.git"
+  },
+  "homepage": "https://github.com/mlrawlings/kent-react",
+  "bugs": {
+    "url": "https://github.com/mlrawlings/kent-react/issues"
+  }
+}
