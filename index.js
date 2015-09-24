@@ -28,7 +28,9 @@ function createServerRenderer(ctx, options) {
 
 		var element = React.createElement(Component, props)
 
+		ctx.document.meta = ctx.document.meta || []
 		ctx.document.scripts = ctx.document.scripts || []
+		
 		if(options.mountOnClient) {
 			ctx.document.content = React.renderToString(element)
 			ctx.document.scripts.push(getInitScript(Component, props, options))
@@ -36,6 +38,8 @@ function createServerRenderer(ctx, options) {
 			ctx.document.content = React.renderToStaticMarkup(element)
 		}
 
+		ctx.document.meta.unshift({ charset:'UTF-8' })
+		ctx.res.set('Content-Type', 'text/html; charset=utf-8')
 		ctx.res.end(getDocument(ctx.document, options))
 	}
 }
