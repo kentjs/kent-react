@@ -4,21 +4,29 @@ var React = require('react')
   , path = require('path')
   , Module = require('module')
   , assign = require('object-assign')
+  , pendingRequests = {}
+  , uid = 0
 
 var DEFAULT_OPTIONS = {
 	mountNodeId: 'app',
 	moduleRoot: null,
-	mountOnClient: true
+	mountOnClient: true,
+	detectDevice:false
 }
 
 module.exports = function(options){
 	options = assign({}, DEFAULT_OPTIONS, options)
 
 	return function middleware(next) {
-		this.document = { doctype:'html' }
-		this.render = createServerRenderer(this, options)
-		this.props = {}
-		next()
+		if (this.url.indexOf('/deviceInfo') === 0) {
+			pendingRequests[this.query.requestId](JSON.parse(this.query.device))
+			this.res.end('')
+		} else {
+			this.document = { doctype:'html' }
+			this.render = createServerRenderer(this, options)
+			this.props = {}
+			next()
+		}
 	}
 }
 	
@@ -26,21 +34,39 @@ function createServerRenderer(ctx, options) {
 	return function render(Component, props) {
 		props = assign({}, ctx.props, props)
 
-		var element = React.createElement(Component, props)
+		var requestId = uid++
 
 		ctx.document.meta = ctx.document.meta || []
 		ctx.document.scripts = ctx.document.scripts || []
 		
-		if(options.mountOnClient) {
-			ctx.document.content = React.renderToString(element)
-			ctx.document.scripts.push(getInitScript(Component, props, options))
-		} else {
-			ctx.document.content = React.renderToStaticMarkup(element)
-		}
-
 		ctx.document.meta.unshift({ charset:'UTF-8' })
 		ctx.res.set('Content-Type', 'text/html; charset=utf-8')
-		ctx.res.end(getDocument(ctx.document, options))
+
+		ctx.res.write(getDocumentStart(ctx.document, requestId, options))
+
+		if(options.mountOnClient) {
+			ctx.document.scripts.push(getInitScript(Component, props, options))
+		}
+
+		pendingRequests[requestId] = (device) => {
+			delete pendingRequests[this.query.requestId]
+
+			props.device = device
+
+			var element = React.createElement(Component, props)
+
+			if(options.mountOnClient) {
+				ctx.res.write(React.renderToString(element))
+			} else {
+				ctx.res.write(React.renderToStaticMarkup(element))
+			}
+
+			ctx.res.end(getDocumentEnd(ctx.document, options))
+		}
+
+		if(!options.detectDevice) {
+			pendingRequests[requestId]()
+		}
 	}
 }
 
@@ -69,12 +95,15 @@ function getComponentPath(Component) {
 	  , componentModule
 
 	callerModule = Module._cache[callerFile]
+	try {
+		componentModule = find(callerModule.children, function(module) {
+			return module.exports == Component
+		})
 
-	componentModule = find(callerModule.children, function(module) {
-		return module.exports == Component
-	})
-
-	return componentModule.filename
+		return componentModule.filename
+	} catch(e) {
+		console.error(e, callerModule)
+	}
 }
 
 function getCallerFile() {
@@ -96,11 +125,11 @@ function getCallerFile() {
 	return undefined;
 }
 
-function getDocument(document, options) {
+function getDocumentStart(document, requestId, options) {
 	var meta = getMeta(document.meta)
 	  , links = getLinks(document.links)
 	  , styles = getStyles(document.styles)
-	  , scripts = getScripts(document.scripts)
+	  , script = options.detectDevice ? getDeviceScript(requestId) : ''
 
 	return `
 		<!doctype ${document.doctype}>
@@ -110,12 +139,37 @@ function getDocument(document, options) {
 			${meta}
 			${links}
 			${styles}
+			${script}
 		</head>
 		<body>
-			<div id="${options.mountNodeId}">${document.content}</div>
+			<div id="${options.mountNodeId}">`
+}
+
+function getDocumentEnd(document, options) {
+	var scripts = getScripts(document.scripts)
+
+	return `
+			</div>
 			${scripts}
 		</body>
 		</html>
+	`
+}
+
+function getDeviceScript(requestId) {
+	return `
+		<script type="text/javascript">
+			(function () {
+				var device = {
+					width:document.documentElement.clientWidth,
+					height:document.documentElement.clientHeight
+				}
+
+				var src = '/deviceInfo?requestId='+ ${requestId} + '&device=' + encodeURIComponent(JSON.stringify(device))
+
+				document.write('<script type="text/javascript" src="'+src+'" ></'+'script>')
+			})()
+		</script>
 	`
 }
 
