@@ -1,6 +1,6 @@
 {
   "name": "kent-react",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "description": "render react components isomorphically using kent",
   "main": "index.js",
   "license": "MIT",
@@ -9,6 +9,7 @@
     "email": "mlrawlings@gmail.com",
     "url": "https://github.com/mlrawlings"
   },
+  "browser":"./client.js",
   "dependencies": {
     "array-find": "^1.0.0",
     "hash-loader": "^1.0.0",
@@ -26,5 +27,28 @@
   "homepage": "https://github.com/mlrawlings/kent-react",
   "bugs": {
     "url": "https://github.com/mlrawlings/kent-react/issues"
-  }
+  },
+  "gitHead": "15cdeb02883018629fc882cc1647841528ca5faa",
+  "_id": "kent-react@1.1.0",
+  "_shasum": "e9200fcf1f12faa3359ba73cca6a6fc3a5560953",
+  "_from": "kent-react@>=1.1.0 <2.0.0",
+  "_npmVersion": "2.1.2",
+  "_nodeVersion": "4.1.2",
+  "_npmUser": {
+    "name": "mlrawlings",
+    "email": "ml.rawlings@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "mlrawlings",
+      "email": "ml.rawlings@gmail.com"
+    }
+  ],
+  "dist": {
+    "shasum": "e9200fcf1f12faa3359ba73cca6a6fc3a5560953",
+    "tarball": "http://registry.npmjs.org/kent-react/-/kent-react-1.1.0.tgz"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/kent-react/-/kent-react-1.1.0.tgz",
+  "readme": "ERROR: No README data found!"
 }

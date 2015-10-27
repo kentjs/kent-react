@@ -1,4 +1,5 @@
 var React = require('react')
+  , ContextWrapper = require('./context-wrapper')
   , hashLoader = require('hash-loader')
   , find = require('array-find')
   , path = require('path')
@@ -11,20 +12,23 @@ var DEFAULT_OPTIONS = {
 	mountNodeId: 'app',
 	moduleRoot: null,
 	mountOnClient: true,
-	detectDevice:false
+	contextTypes: {}
 }
 
 module.exports = function(options){
 	options = assign({}, DEFAULT_OPTIONS, options)
 
+	ContextWrapper.childContextTypes = options.contextTypes
+
 	return function middleware(next) {
-		if (this.url.indexOf('/deviceInfo') === 0) {
-			pendingRequests[this.query.requestId](JSON.parse(this.query.device))
+		if (this.url.indexOf('/clientContext') === 0) {
+			pendingRequests[this.query.requestId](JSON.parse(this.query.context))
 			this.res.end('')
 		} else {
 			this.document = { doctype:'html' }
 			this.render = createServerRenderer(this, options)
 			this.props = {}
+			this.context = {}
 			next()
 		}
 	}
@@ -35,6 +39,7 @@ function createServerRenderer(ctx, options) {
 		props = assign({}, ctx.props, props)
 
 		var requestId = uid++
+		  , componentPath = getComponentPath(Component)
 
 		ctx.document.meta = ctx.document.meta || []
 		ctx.document.scripts = ctx.document.scripts || []
@@ -44,19 +49,18 @@ function createServerRenderer(ctx, options) {
 
 		ctx.res.write(getDocumentStart(ctx.document, requestId, options))
 
-		if(options.mountOnClient) {
-			ctx.document.scripts.push(getInitScript(Component, props, options))
-		}
+		pendingRequests[requestId] = (clientContext) => {
+			delete pendingRequests[requestId]
 
-		pendingRequests[requestId] = (device) => {
-			delete pendingRequests[this.query.requestId]
-
-			props.device = device
-
-			var element = React.createElement(Component, props)
+			var context = assign(clientContext || {}, ctx.context)
+			  , element = React.createElement(ContextWrapper, {
+					children:React.createElement(Component, props),
+					context:context
+				})
 
 			if(options.mountOnClient) {
 				ctx.res.write(React.renderToString(element))
+				ctx.document.scripts.push(getInitScript(componentPath, props, context, options))
 			} else {
 				ctx.res.write(React.renderToStaticMarkup(element))
 			}
@@ -64,23 +68,33 @@ function createServerRenderer(ctx, options) {
 			ctx.res.end(getDocumentEnd(ctx.document, options))
 		}
 
-		if(!options.detectDevice) {
+		if(!options.clientContext) {
 			pendingRequests[requestId]()
 		}
 	}
 }
 
-function getInitScript(Component, props, options) {
+function getInitScript(componentPath, props, context, contextTypes, options) {
 	var propsJson = JSON.stringify(JSON.stringify(props))
-	  , componentPath = getComponentPath(Component)
-	  , hash = hashLoader.getHash(componentPath, options.moduleRoot)
+	  , contextJson = JSON.stringify(JSON.stringify(context))
+	  , wrapperPath = path.join(__dirname, './context-wrapper.js')
+	  , wrapperHash = hashLoader.getHash(wrapperPath, options.moduleRoot)
+	  , componentHash = hashLoader.getHash(componentPath, options.moduleRoot)
+
+	console.log(wrapperPath)
 
 	return `
 		<script>
 			React.render(
 				React.createElement(
-					_modules['${hash}'], 
-					JSON.parse(${propsJson})
+					_modules['${wrapperHash}'], 
+					{
+						children:React.createElement(
+							_modules['${componentHash}'], 
+							JSON.parse(${propsJson})
+						),
+						context:JSON.parse(${contextJson})
+					}
 				), 
 				document.getElementById('${options.mountNodeId}')
 			)
@@ -129,7 +143,7 @@ function getDocumentStart(document, requestId, options) {
 	var meta = getMeta(document.meta)
 	  , links = getLinks(document.links)
 	  , styles = getStyles(document.styles)
-	  , script = options.detectDevice ? getDeviceScript(requestId) : ''
+	  , script = options.clientContext ? getClientContextScript(requestId, options.clientContext) : ''
 
 	return `
 		<!doctype ${document.doctype}>
@@ -142,7 +156,8 @@ function getDocumentStart(document, requestId, options) {
 			${script}
 		</head>
 		<body>
-			<div id="${options.mountNodeId}">`
+			<div id="${options.mountNodeId}">
+	`.trim()
 }
 
 function getDocumentEnd(document, options) {
@@ -153,19 +168,15 @@ function getDocumentEnd(document, options) {
 			${scripts}
 		</body>
 		</html>
-	`
+	`.trim()
 }
 
-function getDeviceScript(requestId) {
+function getClientContextScript(requestId, clientContext) {
 	return `
 		<script type="text/javascript">
 			(function () {
-				var device = {
-					width:document.documentElement.clientWidth,
-					height:document.documentElement.clientHeight
-				}
-
-				var src = '/deviceInfo?requestId='+ ${requestId} + '&device=' + encodeURIComponent(JSON.stringify(device))
+				var context = encodeURIComponent(JSON.stringify(${clientContext}))
+				var src = '/clientContext?requestId='+ ${requestId} + '&context=' + context
 
 				document.write('<script type="text/javascript" src="'+src+'" ></'+'script>')
 			})()
