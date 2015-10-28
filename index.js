@@ -22,7 +22,8 @@ module.exports = function(options){
 
 	return function middleware(next) {
 		if (this.url.indexOf('/clientContext') === 0) {
-			pendingRequests[this.query.requestId](JSON.parse(this.query.context))
+			var request = pendingRequests[this.query.requestId]
+			if(request) request(JSON.parse(this.query.context))
 			this.res.end('')
 		} else {
 			this.document = { doctype:'html' }
@@ -70,18 +71,21 @@ function createServerRenderer(ctx, options) {
 
 		if(!options.clientContext) {
 			pendingRequests[requestId]()
+		} else {
+			setTimeout(() => {
+				var request = pendingRequests[requestId]
+				if(request) request()
+			}, 2000)
 		}
 	}
 }
 
-function getInitScript(componentPath, props, context, contextTypes, options) {
+function getInitScript(componentPath, props, context, options) {
 	var propsJson = JSON.stringify(JSON.stringify(props))
 	  , contextJson = JSON.stringify(JSON.stringify(context))
 	  , wrapperPath = path.join(__dirname, './context-wrapper.js')
 	  , wrapperHash = hashLoader.getHash(wrapperPath, options.moduleRoot)
 	  , componentHash = hashLoader.getHash(componentPath, options.moduleRoot)
-
-	console.log(wrapperPath)
 
 	return `
 		<script>

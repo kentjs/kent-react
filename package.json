@@ -1,15 +1,15 @@
 {
   "name": "kent-react",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "render react components isomorphically using kent",
   "main": "index.js",
+  "browser": "client.js",
   "license": "MIT",
   "author": {
     "name": "Michael Rawlings",
     "email": "mlrawlings@gmail.com",
     "url": "https://github.com/mlrawlings"
   },
-  "browser":"./client.js",
   "dependencies": {
     "array-find": "^1.0.0",
     "hash-loader": "^1.0.0",
@@ -28,27 +28,10 @@
   "bugs": {
     "url": "https://github.com/mlrawlings/kent-react/issues"
   },
-  "gitHead": "15cdeb02883018629fc882cc1647841528ca5faa",
-  "_id": "kent-react@1.1.0",
-  "_shasum": "e9200fcf1f12faa3359ba73cca6a6fc3a5560953",
-  "_from": "kent-react@>=1.1.0 <2.0.0",
-  "_npmVersion": "2.1.2",
-  "_nodeVersion": "4.1.2",
-  "_npmUser": {
-    "name": "mlrawlings",
-    "email": "ml.rawlings@gmail.com"
-  },
-  "maintainers": [
-    {
-      "name": "mlrawlings",
-      "email": "ml.rawlings@gmail.com"
-    }
-  ],
-  "dist": {
-    "shasum": "e9200fcf1f12faa3359ba73cca6a6fc3a5560953",
-    "tarball": "http://registry.npmjs.org/kent-react/-/kent-react-1.1.0.tgz"
-  },
-  "directories": {},
-  "_resolved": "https://registry.npmjs.org/kent-react/-/kent-react-1.1.0.tgz",
-  "readme": "ERROR: No README data found!"
+  "readme": "# kent-react\n\n[![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)\n\nrender react components isomorphically using kent\n\n## Usage\n\n[![NPM](https://nodei.co/npm/kent-react.png)](https://www.npmjs.com/package/kent-react)\n\nprovides `this.render(Component, props)`, `this.document`, and `this.props`\n\n```javascript\n\nrouter.use(function(next) {\n\tthis.document.title = 'My Site'\n\n\tthis.document.scripts = [\n\t\t'https://cdnjs.cloudflare.com/ajax/libs/es6-promise/3.0.2/es6-promise.min.js',\n\t\t'https://cdnjs.cloudflare.com/ajax/libs/react/'+require('react').version+'/react-with-addons.min.js',\n\t\t'/dist/client.js'\n\t]\n\n\tthis.document.styles = [\n\t\t'https://fonts.googleapis.com/css?family=Open+Sans:400,300,700,600',\n\t\t'https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css',\n\t\t'/styles/core.css'\n\t]\n\n\tthis.document.meta = [\n\t\t{ name:'viewport', content:'width=device-width, initial-scale=1' }\n\t]\n\n\tnext()\n})\n\n```\n\n## License\n\nMIT, see [LICENSE.md](http://github.com/mlrawlings/kent-react/blob/master/LICENSE.md) for details.\n",
+  "readmeFilename": "README.md",
+  "gitHead": "0bd710510a3582f0b502887fb8256f29b5806754",
+  "_id": "kent-react@1.1.1",
+  "_shasum": "3d6a73627d64b2b8d177834a1deea575e3d14415",
+  "_from": "kent-react@>=1.1.1 <2.0.0"
 }
